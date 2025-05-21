@@ -1,15 +1,17 @@
-const { default: makeWASocket, useSingleFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const makeWASocket = require('baileys').default;
+const { useSingleFileAuthState, DisconnectReason } = require('baileys');
 const pino = require('pino');
 const fs = require('fs');
 const autoReplies = require('./autoReplies.json');
 
-const { state, saveState } = useSingleFileAuthState('./sessions/auth_info.json');
+// Setup auth directory
+const { state, saveState } = useSingleFileAuthState('./auth_info.json');
 
 async function startBot() {
     const sock = makeWASocket({
-        logger: pino({ level: 'silent' }),
-        printQRInTerminal: true,
         auth: state,
+        logger: pino({ level: 'silent' }),
+        printQRInTerminal: true
     });
 
     sock.ev.on('creds.update', saveState);
@@ -17,14 +19,14 @@ async function startBot() {
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === 'close') {
-            const reason = lastDisconnect?.error?.output?.statusCode;
-            if (reason !== DisconnectReason.loggedOut) {
-                startBot(); // reconnect
+            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+            if (shouldReconnect) {
+                startBot();
             } else {
-                console.log('Logged out. Please delete session and restart.');
+                console.log("❌ Logged out.");
             }
         } else if (connection === 'open') {
-            console.log('✅ Bot is now connected!');
+            console.log("✅ Bot is now connected!");
         }
     });
 
@@ -33,7 +35,7 @@ async function startBot() {
         if (!msg.message || msg.key.fromMe) return;
 
         const from = msg.key.remoteJid;
-        const text = msg.message.conversation?.toLowerCase() || '';
+        const text = msg.message.conversation?.toLowerCase() || "";
 
         if (autoReplies[text]) {
             await sock.sendMessage(from, { text: autoReplies[text] });
