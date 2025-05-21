@@ -2,12 +2,13 @@
   "name": "whatsapp-bot",
   "version": "1.0.0",
   "description": "Clean WhatsApp Auto-Reply Bot",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "baileys": "^6.6.0",
+    "baileys": "6.6.0",
     "pino": "^8.0.0"
   }
 }
